@@ -1,49 +1,11 @@
 > {-# LANGUAGE OverloadedStrings #-}
+> module Lisp.Read (readL) where
 
-This is the main module that defines what a Lisp value is, how to print it, and how to read it.
-This module does not handle evaluation
-
-> module LispVal (
->   LispVal(Symbol, Int, Real),
->   pp, readL
->   ) where
->
 > import Data.Text
 > import Data.Attoparsec.Text
 > import Control.Applicative
-
-The Lisp code is divided into separate m
-
-The LispVal datatype itself. Lisp values can be symbols, strings, chars, numbers, booleans, nil
-or cons pairs of Lisp values. 
-
-> data LispVal =
->   Symbol Text
->   | Int Integer
->   | Real Double
->   deriving (Show, Eq)
-
-The main Lisp loop is the "read eval print" loop. As such,
-we should have functions to do those items. Ideally, the
-signatures of those functions should be:
-
-
-read :: Text -> LispVal
-eval :: LispVal -> LispVal
-print :: LispVal -> Text
-
-Unfortunately, to avoid name collisions with other Haskell modules, I need
-to rename these functions.
-
-Print is called "pp". Ideally, read (print l) == l. This means
-that symbols should print as bare words, strings as quoted
-strings, booleans as #t and #f, etc.
-
-> pp :: LispVal -> Text
-> pp l = case l of
->   Symbol t -> t
->   Int n -> pack $ show n
->   Real r -> pack $ show r
+> import Lisp.LispVal
+> import Data.Scientific (floatingOrInteger)
 
 Read is called "readL", to avoid conflicting with existing read functions. It is not a parser, but it calls
 parsers.
@@ -56,7 +18,21 @@ parsers.
 A LispVal can be a symbol, a number, a bool, nil, or a pair/list.
 
 > parseLispVal :: Parser LispVal
-> parseLispVal = parseSymbol <|> parseNumber
+> parseLispVal = do
+>   skipSpace
+>   parseSymbol
+>   <|> parseNumber
+>   <|> parseString
+>   <|> parseBool
+
+Many LispVals can be followed by a delimiter, like (if #t(true case) (false case)), and don't
+require whitespace or other gap. So let's add a "delimiter" parser for lookahead purposes
+
+
+> delimiter :: Parser Char
+> delimiter = do
+>   space <|> (satisfy $ inClass "()[]\";#") <|> (endOfInput >> return 'x')
+
 
 Parsing a Scheme symbol can be complicated. According to R6RS, "[i]n general, a sequence of letters,
 digits, and 'extended alphabetic characters' is an identifier when it begins with a character that cannot being
@@ -94,11 +70,28 @@ they have to be treated separately.
 
 > parseNumber :: Parser LispVal
 > parseNumber = do
->   num <- number  -- Note: 'number' parser is deprecated in favor of 'scientific'
->   case num of
->     I i -> return $ Int i
->     D d -> return $ Real d
+>   num <- scientific  -- Note: 'number' parser is deprecated in favor of 'scientific'
+>   case (floatingOrInteger) num of
+>     Right i -> return $ Int i
+>     Left  d -> return $ Real d
 
-   
+A lisp string is quoted, with certain escape sequenced indicated by a \
 
+> parseString :: Parser LispVal
+> parseString = do
+>   char '"'
+>   s <- many (notChar '"')
+>   char '"'
+>   return $ String $ pack s
+
+A lisp boolean is either #t or #f for True and False, respectively
+
+> parseBool :: Parser LispVal
+> parseBool = do
+>   b <- eitherP (string "#t") (string "#f")
+>   delimiter
+>   return $ case b of
+>     Left _ -> Bool True
+>     _ -> Bool False
+>                               
 

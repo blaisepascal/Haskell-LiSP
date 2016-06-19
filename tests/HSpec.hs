@@ -6,13 +6,13 @@ import Test.QuickCheck
 import Data.Text
 import Control.Exception (evaluate)
 
-import LispVal
+import Lisp
 
 main :: IO ()
 main = hspec $ do
+  let foo = Symbol "foo"
+  let bar = Symbol "bar"
   describe "LispVal.Symbol" $ do
-    let foo = Symbol "foo"
-    let bar = Symbol "bar"
     
     it "generates equal symbols with equal arguments" $ do
       foo `shouldBe` (Symbol "foo")
@@ -35,7 +35,7 @@ main = hspec $ do
 
   describe "LispVal.pp" $ do
     it "prints symbols as its own value" $ do
-      (pp (Symbol "foo")) `shouldBe` "foo"
+      (pp foo) `shouldBe` "foo"
 
     it "QuickCheck symbols print as their own value" $ do
       property $ \s -> let t = pack s in (pp (Symbol t)) == t
@@ -59,10 +59,16 @@ main = hspec $ do
         evaluate (readL "@") `shouldThrow` anyErrorCall
 
       it "parses 'foo' as a symbol" $ do
-        (readL "foo") `shouldBe` (Symbol "foo")
+        (readL "foo") `shouldBe` foo
 
       it "parses 'f@' as a symbol" $ do
         (readL "f@") `shouldBe` (Symbol "f@")
+
+      it "ignores leading spaces" $ do
+        (readL "  bar") `shouldBe` bar
+
+      it "ignores trailing spaces" $ do
+        (readL "foo  ") `shouldBe` foo
 
     describe "parses numbers" $ do
       it "parses '123' as a number" $ do
@@ -70,4 +76,23 @@ main = hspec $ do
 
       it "parses '2.13' as a number" $ do
         (readL "3.14") `shouldBe` (Real 3.14)
+
+    describe "parse strings" $ do
+      let aString = "a string"
+      let quote t = cons '"' (snoc (replace "\"" "\\\"" t) '"') 
+      
+      it "parses \"a string\" as a string LispVal" $ do
+        (readL $ quote aString) `shouldBe` (String aString)
+
+    describe "parse booleans" $ do
+      it "parses #t as a True LispVal" $ do
+        (readL "#t") `shouldBe` (Bool True)
+
+      it "parses #f as a False LispVal" $ do
+        (readL "#f") `shouldBe` (Bool False)
+
+      it "fails to parse #true" $ do
+        evaluate (readL "#true") `shouldThrow` anyErrorCall
+      
+
         
