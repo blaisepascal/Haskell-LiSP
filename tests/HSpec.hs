@@ -4,6 +4,8 @@
 import Test.Hspec
 import Test.QuickCheck
 import Data.Text
+import Data.Ratio
+import Data.Complex
 import Control.Exception (evaluate)
 
 import Lisp
@@ -49,6 +51,15 @@ main = hspec $ do
 
     it "prints decimals as thier own value" $ 
       pp (Real 3.14) `shouldBe` "3.14"
+
+    it "prints rationals as their own value, lisp-style" $
+      pp (Rational (3%4)) `shouldBe` "3/4"
+
+    it "prints rationals reduced" $
+      pp (Rational (4%8)) `shouldBe` "1/2"
+
+    it "prints complex number as their own value, lisp-style" $
+      pp (Complex (3:+4)) `shouldBe` "3.0+4.0i"
 
     it "prints strings in quotes" $ 
       pp (String "foo") `shouldBe` "\"foo\""
@@ -109,7 +120,19 @@ main = hspec $ do
  
       it "parses '2.13' as a number" $ 
         readL "3.14" `shouldBe` Real 3.14
- 
+
+      it "parses '3/4' as a number" $
+        readL "3/4" `shouldBe` Rational (3%4)
+
+      it "Rationals have to have integer numerators" $
+        evaluate (readL "3.1/4") `shouldThrow` anyErrorCall
+
+      it "Rationals have to have integer denominators" $
+        evaluate (readL "3/4.5") `shouldThrow` anyErrorCall
+
+      it "parses '3.0+4.0i' as a complex number" $
+        readL "3.0+4.0i" `shouldBe` Complex (3.0:+4.0)
+
     describe "parse strings" $ do
       let aString = "a string"
       let quote t = cons '"' (snoc (replace "\"" "\\\"" t) '"') 
@@ -145,5 +168,9 @@ main = hspec $ do
 
       it "Longer lists can end in dotted pairs" $
         readL "(foo bar . foo)" `shouldBe` Pair foo (Pair bar foo)
+
+      it "parses 'foo as (quote foo)" $
+        readL "'foo" `shouldBe` Pair (Symbol "quote") (Pair foo Nil)
+        
         
       

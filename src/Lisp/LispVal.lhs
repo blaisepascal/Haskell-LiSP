@@ -7,6 +7,8 @@ This is the main module that defines what a Lisp value is
 >   ) where
 >
 > import Data.Text
+> import Data.Ratio
+> import Data.Complex
 
 The LispVal datatype itself. Lisp values can be symbols, strings, chars, numbers, booleans, nil
 or cons pairs of Lisp values. 
@@ -15,6 +17,8 @@ or cons pairs of Lisp values.
 >   Symbol Text
 >   | Int Integer
 >   | Real Double
+>   | Rational Rational
+>   | Complex (Complex Double)
 >   | String Text
 >   | Bool Bool
 >   | Nil -- empty list

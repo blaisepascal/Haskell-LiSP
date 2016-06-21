@@ -2,7 +2,10 @@
 > module Lisp.Read (readL) where
 
 > import Data.Text
+> import Data.Ratio
+> import Data.Complex
 > import Data.Attoparsec.Text
+> import Data.Attoparsec.Combinator
 > import Control.Applicative
 > import Lisp.LispVal
 > import Data.Scientific (floatingOrInteger)
@@ -26,6 +29,7 @@ A LispVal can be a symbol, a number, a bool, nil, or a pair/list.
 >   <|> parseBool
 >   <|> parseNil
 >   <|> parseList
+>   <|> parseQuoted
 
 Many LispVals can be followed by a delimiter, like (if #t(true case) (false case)), and don't
 require whitespace or other gap. So let's add a "delimiter" parser for lookahead purposes
@@ -71,11 +75,32 @@ A lisp number can be an integer, a float, a fraction. Unfortunately, these are d
 they have to be treated separately.
 
 > parseNumber :: Parser LispVal
-> parseNumber = do
->   num <- scientific  -- Note: 'number' parser is deprecated in favor of 'scientific'
->   case (floatingOrInteger) num of
->     Right i -> return $ Int i
->     Left  d -> return $ Real d
+> parseNumber = parseInteger <|> parseRational <|> parseReal <|> parseComplex
+>
+> parseInteger = do
+>   num <- decimal
+>   lookAhead delimiter
+>   return $ Int num
+>
+> parseRational = do
+>   num <- decimal
+>   char '/'
+>   den <- decimal
+>   lookAhead delimiter
+>   return $ Rational (num%den)
+>
+> parseReal = do
+>   num <- double
+>   lookAhead delimiter
+>   return $ Real num
+>
+> parseComplex = do
+>   r <- double
+>   char '+'
+>   i <- double
+>   char 'i'
+>   lookAhead delimiter
+>   return $ Complex (r:+i)
 
 A lisp string is quoted, with certain escape sequenced indicated by a \
 
@@ -91,7 +116,7 @@ A lisp boolean is either #t or #f for True and False, respectively
 > parseBool :: Parser LispVal
 > parseBool = do
 >   b <- eitherP (string "#t") (string "#f")
->   delimiter
+>   lookAhead delimiter
 >   return $ case b of
 >     Left _ -> Bool True
 >     _ -> Bool False
@@ -139,3 +164,14 @@ When parsing, we need to do that backwards. (foo bar baz) => (foo . (bar . (baz 
 >   car <- parseLispVal
 >   cdr <- parseBareList
 >   return $ Pair car cdr
+
+Quoted expressions are interesting: The expression 'foo is stored as (quote foo). It was
+uncertain to me if there could be a space (e.g., is it OK to do '(foo ' bar) to get (quote (foo (quote bar)))
+or is that an error. Gnu-Scheme seems to think it's OK.
+
+> parseQuoted :: Parser LispVal
+> parseQuoted = do
+>   char '\''
+>   l <- parseLispVal
+>   return $ Pair (Symbol "quote") (Pair l Nil)
+>   

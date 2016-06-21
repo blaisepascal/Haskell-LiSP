@@ -3,6 +3,9 @@
 
 > import Lisp.LispVal
 > import Data.Text
+> import Text.Printf
+> import Data.Ratio
+> import Data.Complex
 
 Print is called "pp". Ideally, read (print l) == l. This means
 that symbols should print as bare words, strings as quoted
@@ -12,7 +15,9 @@ strings, booleans as #t and #f, etc.
 > pp l = case l of
 >   Symbol t -> t
 >   Int n -> pack $ show n
+>   Rational r -> pack $ printf "%v/%v" (numerator r) (denominator r)
 >   Real r -> pack $ show r
+>   Complex c -> pack $ printf "%v+%vi" (realPart c) (imagPart c)
 >   String s -> quote s
 >   Bool b -> if b then "#t" else "#f"
 >   Nil -> "()"
