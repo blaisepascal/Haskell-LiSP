@@ -17,6 +17,8 @@ or cons pairs of Lisp values.
 >   | Real Double
 >   | String Text
 >   | Bool Bool
+>   | Nil -- empty list
+>   | Pair LispVal LispVal
 >   deriving (Show, Eq)
 
 

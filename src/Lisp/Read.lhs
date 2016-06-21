@@ -24,6 +24,8 @@ A LispVal can be a symbol, a number, a bool, nil, or a pair/list.
 >   <|> parseNumber
 >   <|> parseString
 >   <|> parseBool
+>   <|> parseNil
+>   <|> parseList
 
 Many LispVals can be followed by a delimiter, like (if #t(true case) (false case)), and don't
 require whitespace or other gap. So let's add a "delimiter" parser for lookahead purposes
@@ -95,3 +97,45 @@ A lisp boolean is either #t or #f for True and False, respectively
 >     _ -> Bool False
 >                               
 
+A lisp Nil is easy: It's (), and only ()
+
+> parseNil :: Parser LispVal
+> parseNil = do
+>   string "()"
+>   return Nil
+
+Lisp lists are a bit more complicated. A dotted pair is of the form (foo . bar), but things get treated
+specially if bar is another pair or nil. If it's a pair, then it's treated as a list, and more elements get,
+a la (foo . (bar . baz)) => (foo bar . baz). If the last pair has a cdr of nil, then the dot and nil is
+left out, (foo . ()) => (foo), (foo . (bar . (baz . ()))) => (foo bar baz).
+
+When parsing, we need to do that backwards. (foo bar baz) => (foo . (bar . (baz . ()))), etc.
+
+> parseList :: Parser LispVal
+> parseList = do
+>   (string "(") <?> "List open paren"
+>   cdr <- parseBareList
+>   skipSpace
+>   (string ")") <?> "List close paren"
+>   return cdr
+
+> parseBareList :: Parser LispVal
+> parseBareList =  parsePair <|> parseLongList <|> parseListEnd
+>
+> parsePair :: Parser LispVal
+> parsePair = do
+>   car <- parseLispVal
+>   skipSpace
+>   cdr <- "." *> parseLispVal
+>   return $ Pair car cdr
+
+> parseListEnd :: Parser LispVal
+> parseListEnd = do
+>   car <- parseLispVal
+>   return $ Pair car Nil
+>
+> parseLongList :: Parser LispVal
+> parseLongList = do
+>   car <- parseLispVal
+>   cdr <- parseBareList
+>   return $ Pair car cdr
