@@ -21,7 +21,7 @@ strings, booleans as #t and #f, etc.
 >   String s -> quote s
 >   Bool b -> if b then "#t" else "#f"
 >   Nil -> "()"
->   p@(Pair _ _) -> "(" `append` (printBareList p) `append` ")"
+>   p@(Pair _ _) -> "(" `append` printBareList p `append` ")"
 
 Lists need careful work. They are made of chained pairs, where each cdr except the last is another pair, as in
 (Pair (Symbol "foo") (Pair (Symbol "bar") (Pair (Symbol "Baz") end))). If end is Nil, it's a "list", and would be printed
@@ -30,8 +30,8 @@ as (foo bar baz). If end is not a Nil, it's a "dotted list", and would get print
 > printBareList :: LispVal -> Text
 > printBareList l = case l of
 >   Pair a Nil          -> pp a
->   Pair a p@(Pair _ _) -> (pp a) `append` " " `append` (printBareList p)
->   Pair a b            -> (pp a) `append` " . " `append` (pp b)
+>   Pair a p@(Pair _ _) -> pp a `append` " " `append` printBareList p
+>   Pair a b            -> pp a `append` " . " `append` pp b
 
 > quote :: Text -> Text
 > quote t = '"' `cons` t `snoc` '"' 
