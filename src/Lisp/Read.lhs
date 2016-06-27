@@ -30,6 +30,10 @@ A LispVal can be a symbol, a number, a bool, nil, or a pair/list.
 >   <|> parseList
 >   <|> parseQuoted
 
+ >   <|> parseQuasiQuoted
+ >   <|> parseUnquote
+ >   <|> parseUnquoteSplice
+
 Many LispVals can be followed by a delimiter, like (if #t(true case) (false case)), and don't
 require whitespace or other gap. So let's add a "delimiter" parser for lookahead purposes
 
@@ -121,3 +125,18 @@ or is that an error. Gnu-Scheme seems to think it's OK.
 
 > parseQuoted :: Parser LispVal
 > parseQuoted = Pair (Symbol "quote") <$> (Pair <$> (char '\'' *> parseLispVal) <*> pure Nil)  
+
+Until I find out I need it, I think the above covers all my parsing needs. It doesn't have vectors and the
+parsing might not meet all of R6RS standards (I don't think I have any numeric base other than decimal, and
+I don't think the identifiers are complete). But it should be good enough for most of my purposes.
+
+The one thing I'll add now is quasiquotes, since they are similar to parseQuoted
+
+ > parseQuasiQuoted :: Parser LispVal
+ > parseQuasiQuoted = Pair (Symbol "quasiquote") <$> (Pair <$> (char '`' *> parseLispVal) <*> pure Nil)
+ >
+ > parseUnquote :: Parser LispVal
+ > parseUnquote = Pair (Symbol "unquote") <$> (Pair <$> (char ',' *> parseLispVal) <*> pure Nil)
+ >
+ > parseUnquoteSplice :: Parser LispVal
+ > parseUnquoteSplice = Pair (Symbol "unquote-splicing") <$> (Pair <$> (char ',' *> char '@' *> parseLispVal) <*> pure Nil)

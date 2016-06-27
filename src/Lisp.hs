@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lisp (LispVal(..), pp, readL) where
+module Lisp (LispVal(..), readL, eval, pp) where
 
-import Lisp.LispVal
-import Lisp.Read
-import Lisp.Eval
-import Lisp.Print
+import           Lisp.Eval    (eval)
+import           Lisp.LispVal
+import           Lisp.Print
+import           Lisp.Read
 
 
 -- The main Lisp loop is the "read eval print" loop. As such,

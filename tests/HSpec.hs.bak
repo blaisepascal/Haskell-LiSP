@@ -1,0 +1,22 @@
+--{-# LANGUAGE OverloadedStrings #-}
+
+
+--import Test.Hspec
+
+--import qualified Lisp.LispValSpec
+--import qualified Lisp.PrintSpec
+--import qualified Lisp.ReadSpec
+
+
+--main :: IO ()
+--main = hspec spec
+
+--spec :: Spec
+--spec = do
+--  describe "Lisp.LispVal" Lisp.LispValSpec.spec
+--  describe "Lisp.Print" Lisp.PrintSpec.spec
+--  describe "Lisp.Read" Lisp.ReadSpec.spec
+
+        
+        
+

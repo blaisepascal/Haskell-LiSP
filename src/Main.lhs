@@ -1,12 +1,10 @@
-Initially we just want to test building and working
-with literate Haskell. To begin with, we just want to
-write a small "Hello World" program.
+A basic simple REPL for Scheme. Well, not quite a REPL yet. A REP, taking the expression from the command line.
 
+> import Lisp
+> import System.IO
 > import System.Environment
+> import Data.Text (pack)
 >
 > main :: IO ()
-> main =
->   putStrLn "Hello, World!"
-
-If I understand this correctly, this should build and
-execute correctly.
+> main = getArgs >>= print . pp . eval . readL . pack . head
+> 

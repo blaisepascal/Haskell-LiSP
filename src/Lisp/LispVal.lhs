@@ -3,11 +3,11 @@
 This is the main module that defines what a Lisp value is
 
 > module Lisp.LispVal (
->   LispVal(..)
+>   LispVal(..), (<:>)
 >   ) where
 >
-> import Data.Text
 > import Data.Ratio
+> import Data.Text
 > import Data.Complex
 
 The LispVal datatype itself. Lisp values can be symbols, strings, chars, numbers, booleans, nil
@@ -28,4 +28,15 @@ or cons pairs of Lisp values.
 
 Unfortunately, to avoid name collisions with other Haskell modules, I need
 to rename these functions.
+
+Some helper constructor functions:
+
+> infixl 5 <:>
+> (<:>)  :: LispVal -> LispVal -> LispVal
+> (<:>) = Pair
+
+> toLisp :: [LispVal] -> LispVal
+> toLisp [] = Nil
+
+toLisp [x:xs] = Pair x (toLisp xs)
 

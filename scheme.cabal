@@ -19,21 +19,27 @@ executable scheme
   main-is:             Main.lhs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.8 && <4.9, attoparsec, text
+  build-depends:       base >=4.8 && <4.9, attoparsec, text, scientific
   hs-source-dirs:      src
   default-language:    Haskell2010
 
 library
-  exposed-modules:     Lisp
-  other-modules:       Lisp.LispVal, Lisp.Read, Lisp.Eval, Lisp.Print
+  exposed-modules:     Lisp, Lisp.LispVal, Lisp.Read, Lisp.Eval, Lisp.Print
+  other-modules:       Lisp.Eval48
   build-depends:       base >=4.8 && <4.9, text, attoparsec, scientific
   default-language:    Haskell2010
   hs-source-dirs:      src
 
-Test-Suite HSpecTests
+Test-Suite spec
    type:               exitcode-stdio-1.0
-   main-is:            HSpec.hs
-   build-depends:      base, QuickCheck, scheme, hspec, text
+   main-is:            Spec.hs
+   other-modules:      Lisp.LispValSpec, Lisp.PrintSpec
+   build-depends:
+                 base
+               , QuickCheck
+               , scheme
+               , hspec
+               , text
    ghc-options:        -Wall
    hs-source-dirs:     tests
    default-language:   Haskell2010
