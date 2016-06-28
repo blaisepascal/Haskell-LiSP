@@ -21,4 +21,25 @@ Most primitives are self-evaluating: the value of 5 is 5, the value of "foo" is 
 > eval val@(Rational _) = val
 > eval val@(Complex _) = val
 > eval val@(Bool _) = val
-> eval (Pair (Symbol "quote") (Pair val Nil)) = val
+> eval (Pair func args) = evalPair func (l2h args)
+
+Pairs get evaluated in cases. Some keywords (special symbols) get special treatment, while otherwise it's basically
+"look up the function, and apply it"
+
+> evalPair :: LispVal -> [LispVal] -> LispVal
+> evalPair (Symbol "quote") = head
+> evalPair f = (apply f).(map eval)
+
+apply takes a Lisp function and applies it to a list of args.
+
+> apply :: LispVal -> [LispVal] -> LispVal
+> apply func args = maybe (Bool False) ($ args) $ lookup func primitives
+
+primitives are a list of "primitive" operations.
+
+> primitives :: [(LispVal, [LispVal] -> LispVal)]
+> primitives = [(Symbol "+", foldl (+) (Int 0))]
+
+
+
+
